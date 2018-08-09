@@ -1,0 +1,17 @@
+[Unit]
+Description=docker dnsmasq service
+After=docker.service
+Requires=docker.service
+
+[Service]
+#Restart=always
+ExecStartPre=-/usr/bin/docker stop dnsmasq
+ExecStartPre=-/usr/bin/docker rm dnsmasq
+ExecStartPre=/usr/bin/docker load -i /cyphyroot/docker/images/dnsmasq/dnsmasq.tar
+ExecStart=/usr/bin/docker run --name dnsmasq --privileged --net=host --cap-add=NET_ADMIN --log-opt max-size=10m -v /etc/dnsmasq/:/etc/dnsmasq/ -v /var/:/var/ -v /etc/localtime:/etc/localtime dnsmasq --no-resolv
+ExecStop=/usr/bin/docker stop dnsmasq
+#ExecStopPost=/usr/bin/docker rm dnsmasq
+
+[Install]
+WantedBy=multi-user.target
+

@@ -1,0 +1,17 @@
+[Unit]
+Description=docker hostscheck service
+After=docker.service
+Requires=docker.service
+
+[Service]
+#Restart=always
+ExecStartPre=-/usr/bin/docker stop hostscheck
+ExecStartPre=-/usr/bin/docker rm hostscheck
+ExecStartPre=/usr/bin/docker load -i /cyphyroot/docker/images/hostscheck/hostscheck.tar
+ExecStart=/usr/bin/docker run --name hostscheck --privileged --net=host --pid host --cap-add=NET_ADMIN --log-opt max-size=10m -v /etc/dnsmasq/:/etc/dnsmasq/ -v /var/:/var/ -v /cyphyroot/:/cyphyroot/ -v /etc/localtime:/etc/localtime  hostscheck /cyphyroot/log/cyphy_warning.log  /etc/hosts /etc/dnsmasq/hosts dnsmasq 1
+ExecStop=/usr/bin/docker stop hostscheck
+#ExecStopPost=/usr/bin/docker rm hostscheck
+
+[Install]
+WantedBy=multi-user.target
+
