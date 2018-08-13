@@ -8,9 +8,13 @@ import (
 	"sync"
 )
 
-//==================================worker pool==================================
+//===================================pool===================================
+/* 
+from https://github.com/ivpusic/grpool
+*/
+
 // Represents user request, function which should be executed in some worker.
-type Job func() //Job即是callback函数
+type Job func() //callback()
 
 // Gorouting instance which can accept client jobs
 type worker struct {
@@ -23,12 +27,12 @@ func (w *worker) start() {
 	go func() {
 		var job Job
 		for {
-			// worker free, add it to pool
+			// worker创建或job()回调执行完后添加到空闲队列workerPool里
 			w.workerPool <- w
 
 			select {
 			case job = <-w.jobChannel:
-				job() // callback
+				job() // callback, 可以block执行
 			case <-w.stop:
 				w.stop <- struct{}{}
 				return
@@ -56,12 +60,16 @@ func (d *dispatcher) dispatch() {
 	for {
 		select {
 		case job := <-d.jobQueue:
+
+			//从workerPool取出空闲worker协程，把任务分给该worker
 			worker := <-d.workerPool
 			worker.jobChannel <- job
+
 		case <-d.stop:
 			for i := 0; i < cap(d.workerPool); i++ {
 				worker := <-d.workerPool
 
+				fmt.Println("worker stop,", cap(d.workerPool))
 				worker.stop <- struct{}{}
 				<-worker.stop
 			}
@@ -79,6 +87,7 @@ func newDispatcher(workerPool chan *worker, jobQueue chan Job) *dispatcher {
 		stop:       make(chan struct{}),
 	}
 
+	//启动多个worker协程，填满workerPool
 	for i := 0; i < cap(d.workerPool); i++ {
 		worker := newWorker(d.workerPool)
 		worker.start()
@@ -157,6 +166,7 @@ func init() {
 
 // Handles incoming requests.
 func handleRequest(conn net.Conn) {
+
 	// Make a buffer to hold incoming data.
 	buf := make([]byte, 1024)
 	// Read the incoming connection into the buffer.
@@ -184,7 +194,7 @@ func main() {
 	}
 	// Close the listener when the application closes.
 	defer l.Close()
-	
+
 	fmt.Println("Listening on " + CONN_HOST + ":" + CONN_PORT)
 	for {
 		// Listen for an incoming connection.
@@ -195,11 +205,11 @@ func main() {
 		} else {
 			fmt.Println("<< ", conn.RemoteAddr())
 
-			// 每个client启动一个协程，各自处理，没有共享数据，没有竞争
+			// 每个client启动一个协程，各自处理，互相没有交互
 			pool.JobQueue <- func() {
-				handleRequest(conn)
+
+				handleRequest(conn) // job回调
 			}
 		}
 	}
-
 }
