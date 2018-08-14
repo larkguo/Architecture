@@ -1,10 +1,10 @@
 
-# 服务器线程模型
+# 服务器协程/线程模型
 
-## worker-pool模型
+## 1. worker-pool模型
 
 ### 
-go语言原生支持goroutine协程,但随着并发量增加,频繁创建和销毁协程对系统压力也会变大,预先创建worker协程池/线程池是服务器模型的通用做法.
+  go语言原生支持goroutine协程,但随着并发量增加,频繁创建和销毁协程对系统压力也会变大,预先创建worker协程池/线程池是服务器模型的通用做法.
 go语言自带线程安全的channel,类似于其他语言的queue或linux的pipe管道,用于dispatch调度协程和worker工作协程之间通信.
 该模型适用于worker协程之间相互独立,没有影响,各自处理过程可阻塞等待,不用异步处理,逻辑和层次简单.
 以网络请求为例,关键处理过程：
@@ -16,10 +16,10 @@ go语言自带线程安全的channel,类似于其他语言的queue或linux的pip
     ![image](https://github.com/larkguo/Architecture/blob/master/Server/worker-pool.png)   
 
 
-## 分层模型
+## 2. 分层模型
 
 ### 
-该模型适用于处理复杂,需要不同层次分别处理，每个层次处理一部分内容,以一个聊天服务器为例,关键处理过程：
+  该模型适用于处理复杂,需要不同层次分别处理，每个层次处理一部分内容,以一个聊天服务器为例,关键处理过程：
   1.有client加入或离开时,把client信息加入enteringQueue(channel)或leavingQueue队列,待广播协程接收和维护客户信息;
   2.每个client加入后启动单独协程serverHandleConn()处理,接收msg消息,写入broadcastMsgQueue(channel)广播队列;
   3.全局广播协程serverBroadcast(),维护全局变量clients客户信息,并从broadcastMsgQueue里接收msg消息进行广播.
@@ -39,10 +39,11 @@ go语言自带线程安全的channel,类似于其他语言的queue或linux的pip
     ![image](https://github.com/larkguo/Architecture/blob/master/Server/chat2-thread.png)  
 
 上面模型进一步抽象为通用分层模型,serverHandleConn和serverSend2Client抽象为低层处理,
-serverBroadcast处理抽象为高层处理:
+serverBroadcast处理抽象为高层处理.
+模型如下：
     ![image](https://github.com/larkguo/Architecture/blob/master/Server/chat2-abstract.png)  
 
-## 混合模型
+## 3. 混合模型
 ### 
-前两中模型的混合使用，上面主控分层模型中，client的请求和响应协程不用临时创建，使用worker-pool模型事先创建好，你可以试试！
+  前两中模型的混合使用，上面主控分层模型中，client的请求和响应协程不用临时创建，使用worker-pool模型事先创建好，你可以试试！
 
