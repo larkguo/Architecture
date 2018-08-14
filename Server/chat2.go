@@ -17,7 +17,7 @@ func serverSend2Client(client net.Conn, clientMsgQueue <-chan string) {
 func serverHandleConn(client net.Conn, broadcastMsgQueue chan string,
 	enteringQueue chan chan<- string, leavingQueue chan chan<- string) {
 
-	//每一个client创建一个clientMsgChan通道，通道里是需要给该client转发的数据
+	//每一个client创建一个clientMsgQueue通道,通道里是需要给该client转发的数据
 	clientMsgQueue := make(chan string)
 	go serverSend2Client(client, clientMsgQueue)
 
@@ -53,13 +53,13 @@ func serverBroadcast(broadcastMsgQueue chan string,
 	enteringQueue <-chan chan<- string,
 	leavingQueue chan chan<- string) {
 
-	//clients map集合里记录所有client信息，map的key对应每个client的clientQueue
+	//clients map集合里记录所有client信息,map的key对应每个client的clientQueue
 	clients := make(map[chan<- string]bool)
 	for {
 		select {
 		case msg := <-broadcastMsgQueue:
 			for clientMsgQueue := range clients {
-				//serverSend2Client协程一直在监听clientMsgQueue，读取其中的内容，并转发给客户端
+				//serverSend2Client协程一直在监听clientMsgQueue,读取其中的内容，并转发给客户端
 				clientMsgQueue <- msg
 			}
 
