@@ -38,7 +38,8 @@ go语言自带线程安全的channel,类似于其他语言的queue或linux的pip
 模型如下：
     ![image](https://github.com/larkguo/Architecture/blob/master/Server/chat2-thread.png)  
 
-上面模型进一步抽象为通用分层模型,serverHandleConn和serverSend2Client抽象为低层处理,serverBroadcast处理抽象为高层处理:
+上面模型进一步抽象为通用分层模型,serverHandleConn和serverSend2Client抽象为低层处理,
+serverBroadcast处理抽象为高层处理:
     ![image](https://github.com/larkguo/Architecture/blob/master/Server/chat2-abstract.png)  
 
 ## 混合模型
