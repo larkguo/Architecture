@@ -11,9 +11,9 @@
       1.服务器侦听到client连接后把该连接的处理handleRequest()加到dispatcher调度器的JobQueue(channel)的job callback回调里;
       2.dispatcher从JobQueue取出job，再从workerPool(channel)里取出空闲worker，并把job填进该worker的jobChannel;
       3.该worker从自己的jobChannel里取出job回调执行.
-    代码见[worker-pool.go](https://github.com/larkguo/Architecture/blob/master/Server/worker-pool.go)
-    模型如下：
-      ![image](https://github.com/larkguo/Architecture/blob/master/Server/worker-pool.png)   
+代码见[worker-pool.go](https://github.com/larkguo/Architecture/blob/master/Server/worker-pool.go)
+模型如下：
+![image](https://github.com/larkguo/Architecture/blob/master/Server/worker-pool.png)   
 
 
 ## 2. 分层模型
@@ -24,9 +24,9 @@
       2.每个client加入后启动单独协程serverHandleConn()处理,接收msg消息,写入broadcastMsgQueue(channel)广播队列;
       3.全局广播协程serverBroadcast(),维护全局变量clients客户信息,并从broadcastMsgQueue里接收msg消息进行广播.
   
-    代码见[chat1.go](https://github.com/larkguo/Architecture/blob/master/Server/chat1.go)
-    模型如下：
-    ![image](https://github.com/larkguo/Architecture/blob/master/Server/chat1-thread.png)  
+代码见[chat1.go](https://github.com/larkguo/Architecture/blob/master/Server/chat1.go)
+模型如下：
+![image](https://github.com/larkguo/Architecture/blob/master/Server/chat1-thread.png)  
  
  
     上面的模型中serverBroadcast广播协程response会阻塞，影响其他client请求的即时处理,
@@ -35,13 +35,13 @@
       2.广播消息时取出所有client的clientMsgQueue,并把msg消息写入;
       3.每个client的serverSend2Client响应协程从自己的clientMsgQueue取出msg消息并发送.
     
-    代码见[chat2.go](https://github.com/larkguo/Architecture/blob/master/Server/chat2.go)
-    模型如下：
-     ![image](https://github.com/larkguo/Architecture/blob/master/Server/chat2-thread.png)  
+代码见[chat2.go](https://github.com/larkguo/Architecture/blob/master/Server/chat2.go)
+模型如下：
+![image](https://github.com/larkguo/Architecture/blob/master/Server/chat2-thread.png)  
 
     上面模型进一步抽象为通用分层模型,serverHandleConn和serverSend2Client抽象为低层处理,serverBroadcast处理抽象为高层处理.
-    模型如下：
-      ![image](https://github.com/larkguo/Architecture/blob/master/Server/chat2-abstract.png)  
+模型如下：
+![image](https://github.com/larkguo/Architecture/blob/master/Server/chat2-abstract.png)  
 
 ## 3. 混合模型
 ### 
