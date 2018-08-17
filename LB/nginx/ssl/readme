@@ -1,0 +1,41 @@
+
+================================1. openssl generate certificate=====================================
+[root@host176 ssl]# openssl genrsa -out server.key 2048
+Generating RSA private key, 2048 bit long modulus
+........+++
+.......+++
+e is 65537 (0x10001)
+[root@host176 ssl]# openssl req -new -x509 -key server.key -out server.crt -days 3650
+You are about to be asked to enter information that will be incorporated
+into your certificate request.
+What you are about to enter is what is called a Distinguished Name or a DN.
+There are quite a few fields but you can leave some blank
+For some fields there will be a default value,
+If you enter '.', the field will be left blank.
+-----
+Country Name (2 letter code) [XX]:CN
+State or Province Name (full name) []:Beijing
+Locality Name (eg, city) [Default City]:Beijing
+Organization Name (eg, company) [Default Company Ltd]:Cyphy
+Organizational Unit Name (eg, section) []:
+Common Name (eg, your name or your server's hostname) []:Apollo
+Email Address []:service@cyphytech.com
+ [root@host176 ssl]# ll server*
+-rw-r--r-- 1 root root 1367 Jul 25 13:38 server.crt
+-rw-r--r-- 1 root root 1054 Jul 25 13:32 server.csr
+-rw-r--r-- 1 root root 1675 Jul 25 13:37 server.key
+
+================================2. docker start======================================
+
+rm -fr /etc/nginx/ssl/*
+mkdir /etc/nginx/ssl -p
+cp nginx.conf.default /etc/nginx/ssl/nginx.conf.default
+cp mime.types /etc/nginx/ssl/mime.types
+cp server.key /etc/nginx/ssl/server.key
+cp server.crt /etc/nginx/ssl/server.crt
+
+docker load -i nginx-ssl.tar
+
+docker run --name nginx-ssl -d --privileged --net=host --log-opt max-size=10m -v /etc/nginx/ssl/:/etc/nginx/ssl/ -v /etc/localtime:/etc/localtime --restart always -e server1=192.168.120.99:443 -e server2=192.168.120.176:443 -e listen1=8443 -e listen2=9443 nginx-ssl
+
+

@@ -1,0 +1,30 @@
+
+load_module /usr/lib/nginx/modules/ngx_stream_module.so;
+
+worker_processes  	auto;
+error_log  		/dev/stderr notice;
+pid                     /var/run/nginx.pid;
+events {
+    worker_connections	1024;
+}
+
+stream {
+
+    upstream server_pools {
+	    #iphash确保相同客户端ip使用相同的后端服务器
+	    #ip_hash;  
+	    #server1
+	    #server2
+	    #server3
+	    #server4
+	    #server5
+    }
+
+    server {
+	    #listen1
+	    #listen2
+	    #listen3
+	    proxy_pass		server_pools;   
+    }
+}
+

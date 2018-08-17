@@ -1,0 +1,18 @@
+
+================================1. docker images======================================
+docker build -t nginx-udp .
+docker save nginx-udp -o nginx-udp.tar
+
+================================2. docker start======================================
+rm -rf /etc/nginx/nginx.conf.default /etc/nginx/mime.types 
+mkdir /etc/nginx/ -p
+cp nginx.conf.default /etc/nginx/nginx.conf.default
+cp mime.types /etc/nginx/mime.types
+
+docker load -i nginx.tar
+
+docker run --name nginx -d --privileged --net=host --log-opt max-size=10m -v /etc/nginx/:/etc/nginx/ -v /etc/localtime:/etc/localtime --restart always -e server1=192.168.121.47:80 -e server2=192.168.121.47:8080 -e listen1=80 -e listen2=8080 nginx
+
+================================3. docker check======================================
+docker ps -a
+docker logs nginx-tcp

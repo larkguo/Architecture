@@ -1,0 +1,20 @@
+
+================================1. docker images======================================
+docker build -t nginx-tcp .
+docker save nginx-tcp -o nginx-tcp.tar
+
+
+================================2. docker start======================================
+
+rm -fr /etc/nginx/tcp/*
+mkdir /etc/nginx/tcp -p
+cp nginx.conf.default /etc/nginx/tcp/nginx.conf.default
+
+docker load -i nginx-tcp.tar
+
+docker run --name nginx-tcp -d --privileged --net=host --log-opt max-size=10m -v /etc/nginx/tcp/:/etc/nginx/tcp/ -v /etc/localtime:/etc/localtime --restart always -e server1=192.168.121.47:7000 -e server2=192.168.120.176:7000 -e listen1=8000 -e listen2=8001 nginx-tcp
+
+================================3. docker check======================================
+docker ps -a
+docker logs nginx-tcp
+
