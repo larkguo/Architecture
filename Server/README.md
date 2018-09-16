@@ -1,6 +1,9 @@
 
 # 服务器协程/线程模型
 
+    1.worker-pool模型：百万级高并发协程模型，协程内同步执行；
+    2.分层模型：go语言圣经里chat模型，全局统一主控协程，异步执行；
+
 ## 1. worker-pool模型
 
 ### 
@@ -13,7 +16,7 @@
       3.该worker从自己的jobChannel里取出job回调执行.
 代码见[worker-pool.go](https://github.com/larkguo/Architecture/blob/master/Server/worker-pool.go),
 模型如下：
-![image](https://github.com/larkguo/Architecture/blob/master/Server/worker-pool.png)   
+![image](https://github.com/larkguo/Architecture/blob/master/Server/data/worker-pool.png)   
 
 
 ## 2. 分层模型
@@ -26,7 +29,7 @@
   
 代码见[chat1.go](https://github.com/larkguo/Architecture/blob/master/Server/chat1.go),
 模型如下：
-![image](https://github.com/larkguo/Architecture/blob/master/Server/chat1-thread.png)  
+![image](https://github.com/larkguo/Architecture/blob/master/Server/data/chat1-thread.png)  
  
  
     上面的模型中serverBroadcast广播协程response会阻塞，影响其他client请求的即时处理,
@@ -37,13 +40,10 @@
     
 代码见[chat2.go](https://github.com/larkguo/Architecture/blob/master/Server/chat2.go),
 模型如下：
-![image](https://github.com/larkguo/Architecture/blob/master/Server/chat2-thread.png)  
+![image](https://github.com/larkguo/Architecture/blob/master/Server/data/chat2-thread.png)  
 
     上面模型进一步抽象为通用分层模型,serverHandleConn和serverSend2Client抽象为低层处理,serverBroadcast处理抽象为高层处理.
     
-![image](https://github.com/larkguo/Architecture/blob/master/Server/chat2-abstract.png)  
+![image](https://github.com/larkguo/Architecture/blob/master/Server/data/chat2-abstract.png)  
 
-## 3. 混合模型
-### 
-    前两中模型的混合使用，上面主控分层模型中，client的请求和响应协程不用临时创建，使用worker-pool模型事先创建好，你可以试试！
 
