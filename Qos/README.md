@@ -7,8 +7,8 @@
 
 ### 
     Linux中的QoS分为入口(Ingress)部分和出口(Egress)部分，大多数队列(qdisc)都是用于输出流量的带宽控制，例如HTB队列等.
-    而输入流量只有一个队列，即Ingress队列。
-    HTB队列的可以设置复杂的队列规则，从而灵活的控制输出流量的带宽，而ingress队列的功能很简单，不可指定复杂的队列规则.
+    HTB队列的可以设置复杂的队列规则，从而灵活的控制输出流量的带宽.
+    而输入流量只有一个Ingress队列,功能很简单，不可指定复杂的队列规则.
     如果要对输入流量做复杂的带宽控制。
     Ingress和egress控制在linux网络中的位置参见Packet flow in Netfilter and General Networking：
 ![image](https://github.com/larkguo/Architecture/blob/master/Qos/data/Netfilter-packet-flow.svg.png)
@@ -16,15 +16,25 @@
     简化版：
 ![image](https://github.com/larkguo/Architecture/blob/master/Qos/data/tc-in-linux.png)
 
- 
-## 2. 服务器端upload带宽
+
+## 2. 服务器端upload流量控制方案
 
 ###
     服务器不同于路由器，能把forward的数据流对应到egress输出方向的interface接口进行上传方向上的QOS流量控制，
     服务器上如果要对输入流量做复杂的带宽控制，可以通过Ingress队列把输入流量重定向到虚拟设备ifb，
-    然后对虚拟设备ifb的输出流量配置HTB队列，就能达到对输入流量设置复杂的队列规则。
-    SFQ队列通过一个hash函数将不同会话(如TCP会话或者UDP流)分到不同的FIFO队列中，某一个会话独占出口带宽，从而保证数据流的公平性。
-    下面以samba上传带宽QoS控制为例，限制samba client公平共享上传带宽8-9mbit，配置如下：
+    然后对虚拟设备ifb的输出流量配置HTB队列，就能达到对输入流量设置复杂的队列规则.
+    SFQ队列通过一个hash函数将不同会话(如TCP会话或者UDP流)分到不同的FIFO队列中，某一个会话独占出口带宽，从而保证数据流的公平性.
+	+-------+   +-------+   +------+                 +------+
+	|ingress|   |ingress|   |egress|   +---------+   |egress|
+	|qdisc  +--->qdisc  +--->qdisc +--->netfilter+--->qdisc |
+	|eth0   |   |ifb0   |   |ifb0  |   +---------+   |eth0  |
+	+-------+   +-------+   +------+                 +------+
+
+ 
+## 2. 配置
+
+###
+    下面以samba上传文件为例进行QoS流量控制，限制samba client公平共享上传带宽8-9mbit，配置如下：
 ![image](https://github.com/larkguo/Architecture/blob/master/Qos/data/upload-qos.png)
 
 	# ensure that the ifb module is loaded 
