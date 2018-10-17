@@ -5,8 +5,11 @@
 ## 1. Qos在Linux位置
 
 ### 
-    Linux中的QoS分为入口(Ingress)部分和出口(Egress)部分，大多数队列(qdisc)都是用于输出流量的带宽控制，例如HTB队列等，而输入流量只有一个队列，即Ingress队列。HTB队列的可以设置复杂的队列规则，从而灵活的控制输出流量的带宽，而ingress队列的功能很简单，不可指定复杂的队列规则.如果要对输入流量做复杂的带宽控制。
-    Ingress和egress控制在linux网络中的位置参见 Packet flow in Netfilter and General Networking.TC流量控制在Linux网络中的位置如下：
+    Linux中的QoS分为入口(Ingress)部分和出口(Egress)部分，大多数队列(qdisc)都是用于输出流量的带宽控制，
+例如HTB队列等，而输入流量只有一个队列，即Ingress队列。HTB队列的可以设置复杂的队列规则，从而灵活的控制输出流量的带宽，
+		而ingress队列的功能很简单，不可指定复杂的队列规则.如果要对输入流量做复杂的带宽控制。
+    Ingress和egress控制在linux网络中的位置参见 Packet flow in Netfilter and General Networking.
+    TC流量控制在Linux网络中的位置如下：
 ![image](https://github.com/larkguo/Architecture/blob/master/Qos/data/Netfilter-packet-flow.svg.png)
     
     简化版：
