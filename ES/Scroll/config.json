@@ -1,0 +1,20 @@
+{
+    "Configuration": [
+        {
+            "Key": "SearchURL",
+            "Value":"http://192.168.209.129:9200"
+        },
+        {
+            "Key": "Size",
+            "Value": "2"
+        },
+        {
+            "Key":"OutputFileName",
+            "Value":"logs-output.out"
+        },
+        {
+            "Key": "OutputDirectory",
+            "Value":""
+        }
+    ]
+}

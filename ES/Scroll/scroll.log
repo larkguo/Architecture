@@ -1,0 +1,251 @@
+[root@localhost ~]# curl '192.168.209.129:9200/logs/_search'
+{"took":1,"timed_out":false,"_shards":{"total":5,"successful":5,"skipped":0,"failed":0},"hits":{"total":5,"max_score":1.0,"hits":[{"_index":"logs","_type":"doc","_id":"kKrOwWkB_hVnVxNZozTF","_score":1.0,"_source":{
+    "@timestamp": "2019-03-18T09:19:05.003Z",
+    "host": "192.168.209.129",
+    "module": "zfs",
+    "level": "DEBUG",
+    "message": "200 OK"
+}},{"_index":"logs","_type":"doc","_id":"karOwWkB_hVnVxNZuzR7","_score":1.0,"_source":{
+    "@timestamp": "2019-04-18T08:18:05.001Z",
+    "host": "192.168.209.130",
+    "module": "s3server",
+    "level": "ERROR",
+    "message": "403 Client Access Licenses exceeded."
+}},{"_index":"logs","_type":"doc","_id":"kqrOwWkB_hVnVxNZ0zSU","_score":1.0,"_source":{
+    "@timestamp": "2019-06-18T08:18:16.020Z",
+    "host": "192.168.209.131",
+    "module": "lakefs",
+    "level": "WARN",
+    "message": "404 Not found"
+}},{"_index":"logs","_type":"doc","_id":"j6rKwWkB_hVnVxNZHTSQ","_score":1.0,"_source":{
+    "@timestamp": "2019-05-18T08:18:05.000Z",
+    "host": "192.168.209.129",
+    "module": "httpserver",
+    "level": "ERROR",
+    "message": "403 Client Access Licenses exceeded."
+}},{"_index":"logs","_type":"doc","_id":"k6rOwWkB_hVnVxNZ6TT6","_score":1.0,"_source":{
+    "@timestamp": "2019-05-19T10:18:05.100Z",
+    "host": "192.168.209.128",
+    "module": "httpserver",
+    "level": "INFO",
+    "message": "301 permanent redirect"
+}}]}}[root@localhost ~]#
+[root@localhost ~]# curl '192.168.209.129:9200/logs/_search?pretty&scroll=1m' -H 'Content-Type: application/json' -d '{"size": 2}'
+{
+  "_scroll_id" : "DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAALWFm10VnpKTG5IUVVLMDNaa1A3YW9ZX2cAAAAAAAAC2RZtdFZ6SkxuSFFVSzAzWmtQN2FvWV9nAAAAAAAAAtoWbXRWekpMbkhRVUswM1prUDdhb1lfZwAAAAAAAALXFm10VnpKTG5IUVVLMDNaa1A3YW9ZX2cAAAAAAAAC2BZtdFZ6SkxuSFFVSzAzWmtQN2FvWV9n",
+  "took" : 1,
+  "timed_out" : false,
+  "_shards" : {
+    "total" : 5,
+    "successful" : 5,
+    "skipped" : 0,
+    "failed" : 0
+  },
+  "hits" : {
+    "total" : 5,
+    "max_score" : 1.0,
+    "hits" : [
+      {
+        "_index" : "logs",
+        "_type" : "doc",
+        "_id" : "kKrOwWkB_hVnVxNZozTF",
+        "_score" : 1.0,
+        "_source" : {
+          "@timestamp" : "2019-03-18T09:19:05.003Z",
+          "host" : "192.168.209.129",
+          "module" : "zfs",
+          "level" : "DEBUG",
+          "message" : "200 OK"
+        }
+      },
+      {
+        "_index" : "logs",
+        "_type" : "doc",
+        "_id" : "karOwWkB_hVnVxNZuzR7",
+        "_score" : 1.0,
+        "_source" : {
+          "@timestamp" : "2019-04-18T08:18:05.001Z",
+          "host" : "192.168.209.130",
+          "module" : "s3server",
+          "level" : "ERROR",
+          "message" : "403 Client Access Licenses exceeded."
+        }
+      }
+    ]
+  }
+}
+
+[root@localhost ~]# curl '192.168.209.129:9200/_search/scroll?pretty' -H 'Content-Type: application/json' -d '{"scroll":"1m","scroll_id": "DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAALWFm10VnpKTG5IUVVLMDNaa1A3YW9ZX2cAAAAAAAAC2RZtdFZ6SkxuSFFVSzAzWmtQN2FvWV9nAAAAAAAAAtoWbXRWekpMbkhRVUswM1prUDdhb1lfZwAAAAAAAALXFm10VnpKTG5IUVVLMDNaa1A3YW9ZX2cAAAAAAAAC2BZtdFZ6SkxuSFFVSzAzWmtQN2FvWV9n"}'
+{
+  "_scroll_id" : "DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAALWFm10VnpKTG5IUVVLMDNaa1A3YW9ZX2cAAAAAAAAC2RZtdFZ6SkxuSFFVSzAzWmtQN2FvWV9nAAAAAAAAAtoWbXRWekpMbkhRVUswM1prUDdhb1lfZwAAAAAAAALXFm10VnpKTG5IUVVLMDNaa1A3YW9ZX2cAAAAAAAAC2BZtdFZ6SkxuSFFVSzAzWmtQN2FvWV9n",
+  "took" : 5,
+  "timed_out" : false,
+  "_shards" : {
+    "total" : 5,
+    "successful" : 5,
+    "skipped" : 0,
+    "failed" : 0
+  },
+  "hits" : {
+    "total" : 5,
+    "max_score" : 1.0,
+    "hits" : [
+      {
+        "_index" : "logs",
+        "_type" : "doc",
+        "_id" : "kqrOwWkB_hVnVxNZ0zSU",
+        "_score" : 1.0,
+        "_source" : {
+          "@timestamp" : "2019-06-18T08:18:16.020Z",
+          "host" : "192.168.209.131",
+          "module" : "lakefs",
+          "level" : "WARN",
+          "message" : "404 Not found"
+        }
+      },
+      {
+        "_index" : "logs",
+        "_type" : "doc",
+        "_id" : "j6rKwWkB_hVnVxNZHTSQ",
+        "_score" : 1.0,
+        "_source" : {
+          "@timestamp" : "2019-05-18T08:18:05.000Z",
+          "host" : "192.168.209.129",
+          "module" : "httpserver",
+          "level" : "ERROR",
+          "message" : "403 Client Access Licenses exceeded."
+        }
+      }
+    ]
+  }
+}
+[root@localhost ~]# curl '192.168.209.129:9200/_search/scroll?pretty' -H 'Content-Type: application/json' -d '{"scroll":"1m","scroll_id": "DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAALWFm10VnpKTG5IUVVLMDNaa1A3YW9ZX2cAAAAAAAAC2RZtdFZ6SkxuSFFVSzAzWmtQN2FvWV9nAAAAAAAAAtoWbXRWekpMbkhRVUswM1prUDdhb1lfZwAAAAAAAALXFm10VnpKTG5IUVVLMDNaa1A3YW9ZX2cAAAAAAAAC2BZtdFZ6SkxuSFFVSzAzWmtQN2FvWV9n"}'
+{
+  "_scroll_id" : "DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAALWFm10VnpKTG5IUVVLMDNaa1A3YW9ZX2cAAAAAAAAC2RZtdFZ6SkxuSFFVSzAzWmtQN2FvWV9nAAAAAAAAAtoWbXRWekpMbkhRVUswM1prUDdhb1lfZwAAAAAAAALXFm10VnpKTG5IUVVLMDNaa1A3YW9ZX2cAAAAAAAAC2BZtdFZ6SkxuSFFVSzAzWmtQN2FvWV9n",
+  "took" : 4,
+  "timed_out" : false,
+  "_shards" : {
+    "total" : 5,
+    "successful" : 5,
+    "skipped" : 0,
+    "failed" : 0
+  },
+  "hits" : {
+    "total" : 5,
+    "max_score" : 1.0,
+    "hits" : [
+      {
+        "_index" : "logs",
+        "_type" : "doc",
+        "_id" : "k6rOwWkB_hVnVxNZ6TT6",
+        "_score" : 1.0,
+        "_source" : {
+          "@timestamp" : "2019-05-19T10:18:05.100Z",
+          "host" : "192.168.209.128",
+          "module" : "httpserver",
+          "level" : "INFO",
+          "message" : "301 permanent redirect"
+        }
+      }
+    ]
+  }
+}
+[root@localhost ~]# curl -XGET localhost:9200/_nodes/stats/indices/search?pretty
+{
+  "_nodes" : {
+    "total" : 1,
+    "successful" : 1,
+    "failed" : 0
+  },
+  "cluster_name" : "docker-cluster",
+  "nodes" : {
+    "mtVzJLnHQUK03ZkP7aoY_g" : {
+      "timestamp" : 1554340427640,
+      "name" : "mtVzJLn",
+      "transport_address" : "172.17.0.3:9300",
+      "host" : "172.17.0.3",
+      "ip" : "172.17.0.3:9300",
+      "roles" : [
+        "master",
+        "data",
+        "ingest"
+      ],
+      "attributes" : {
+        "ml.machine_memory" : "3958325248",
+        "xpack.installed" : "true",
+        "ml.max_open_jobs" : "20",
+        "ml.enabled" : "true"
+      },
+      "indices" : {
+        "search" : {
+          "open_contexts" : 5,
+          "query_total" : 720,
+          "query_time_in_millis" : 258,
+          "query_current" : 0,
+          "fetch_total" : 315,
+          "fetch_time_in_millis" : 198,
+          "fetch_current" : 0,
+          "scroll_total" : 140,
+          "scroll_time_in_millis" : 18298794,
+          "scroll_current" : 5,
+          "suggest_total" : 0,
+          "suggest_time_in_millis" : 0,
+          "suggest_current" : 0
+        }
+      }
+    }
+  }
+}
+[root@localhost ~]# date
+Thu Apr  4 09:13:53 CST 2019
+[root@localhost ~]# date
+Thu Apr  4 09:15:40 CST 2019
+[root@localhost ~]# curl -XGET localhost:9200/_nodes/stats/indices/search?pretty
+{
+  "_nodes" : {
+    "total" : 1,
+    "successful" : 1,
+    "failed" : 0
+  },
+  "cluster_name" : "docker-cluster",
+  "nodes" : {
+    "mtVzJLnHQUK03ZkP7aoY_g" : {
+      "timestamp" : 1554340546246,
+      "name" : "mtVzJLn",
+      "transport_address" : "172.17.0.3:9300",
+      "host" : "172.17.0.3",
+      "ip" : "172.17.0.3:9300",
+      "roles" : [
+        "master",
+        "data",
+        "ingest"
+      ],
+      "attributes" : {
+        "ml.machine_memory" : "3958325248",
+        "xpack.installed" : "true",
+        "ml.max_open_jobs" : "20",
+        "ml.enabled" : "true"
+      },
+      "indices" : {
+        "search" : {
+          "open_contexts" : 0,
+          "query_total" : 720,
+          "query_time_in_millis" : 258,
+          "query_current" : 0,
+          "fetch_total" : 315,
+          "fetch_time_in_millis" : 198,
+          "fetch_current" : 0,
+          "scroll_total" : 145,
+          "scroll_time_in_millis" : 19145979,
+          "scroll_current" : 0,
+          "suggest_total" : 0,
+          "suggest_time_in_millis" : 0,
+          "suggest_current" : 0
+        }
+      }
+    }
+  }
+}
+[root@localhost ~]# curl -XDELETE 192.168.209.129:9200/_search/scroll/_all
+{"succeeded":true,"num_freed":1}[root@localhost ~]# 
+[root@localhost ~]# 
