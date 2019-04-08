@@ -166,7 +166,7 @@ func getScroll(scrollTime, scrollId string) (resp *http.Response, err error) {
 config.json
 {
 "Configuration": [
-        {"Key": "SearchURL","Value":"http://192.168.209.129:9200"},
+        {"Key": "SearchAddr","Value":"http://192.168.209.129:9200"},
         {"Key": "TotalSize","Value": "10000"},
         {"Key": "PageSize","Value": "2"},
         {"Key": "ScrollTime","Value": "1m"},
