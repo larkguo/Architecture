@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -15,61 +16,66 @@ import (
 var configSearchAddr string
 var configPageSize int
 var configTotalSize int
+var configStartTime string
+var configEndTime string
+var configLevel string
 var configScrollTime string
-var configOutputFileName string
-var configOutputDirectory string
+var configOutputFile string
 
 const (
 	timeFormatAMZLong   = "2006-01-02T15:04:05.000Z" // Reply date format with nanosecond precision.
 	timeFormatLocalLong = "2006-01-02 15:04:05.000"  // Reply date format with nanosecond precision.
 )
 
-type Configuration struct {
-	Configs []Config `json:"Configuration"`
+type configuration struct {
+	Configs []config `json:"Configuration"`
 }
-type Config struct {
+type config struct {
 	Key   string `json:"Key"`
 	Value string `json:"Value"`
 }
 
-type Log struct {
+type log struct {
 	Timestamp string `json:"@timestamp"`
 	Host      string `json:"host"`
 	Module    string `json:"module"`
 	Level     string `json:"level"`
 	Message   string `json:"message"`
 }
-type Hit struct {
-	Log Log `json:"_source"`
+type hit struct {
+	Log log `json:"_source"`
 }
-type Result struct {
-	ScrollId string `json:"_scroll_id"`
+type result struct {
+	ScrollID string `json:"_scroll_id"`
 	Hits     struct {
 		Total int   `json:"total"`
-		Hits  []Hit `json:"hits"`
+		Hits  []hit `json:"hits"`
 	}
 }
 
 func main() {
-	var result Result
+	var result result
 	writeSize := 0
 	hitsTotal := 0
 
 	// config
 	err := getConfig()
 	if err != nil {
-		fmt.Println(configOutputFileName, err)
+		fmt.Println(configOutputFile, err)
 		return
 	}
-	f, err := os.Create(configOutputFileName)
+
+	path := filepath.Dir(configOutputFile)
+	os.MkdirAll(path, os.ModePerm)
+	f, err := os.Create(configOutputFile)
 	if err != nil {
-		fmt.Println(configOutputFileName, err)
+		fmt.Println(configOutputFile, err)
 		return
 	}
 	defer f.Close()
 
 	// create scroll
-	resp, err := createScroll(configScrollTime, strconv.Itoa(configPageSize))
+	resp, err := createScroll(configScrollTime, strconv.Itoa(configPageSize), configStartTime, configEndTime, configLevel)
 	if err != nil {
 		return
 	}
@@ -89,7 +95,7 @@ func main() {
 		}
 		hitLen := len(result.Hits.Hits)
 		if hitLen == 0 {
-			fmt.Printf("dump(%d),configTotal(%d),stop!\n", writeSize, configTotalSize)
+			fmt.Printf("dump(%d),configTotal(%d),stop!\r\n", writeSize, configTotalSize)
 			return
 		}
 		hitsTotal = result.Hits.Total
@@ -97,19 +103,19 @@ func main() {
 		//write file
 		for _, v := range result.Hits.Hits {
 			t, _ := time.Parse(time.RFC3339, v.Log.Timestamp)
-			str := fmt.Sprintf("%s %s %s %s %s\n", t.Local().Format(timeFormatLocalLong),
+			str := fmt.Sprintf("%s %s %s %s %s\r\n", t.Local().Format(timeFormatLocalLong),
 				v.Log.Host, v.Log.Module, v.Log.Level, v.Log.Message)
 			f.WriteString(str)
 			writeSize++
 			if writeSize >= configTotalSize || writeSize >= hitsTotal {
-				fmt.Printf("dump(%d) >= configTotal(%d) or hitsTotal(%d), stop!\n", writeSize, configTotalSize, hitsTotal)
+				fmt.Printf("dump(%d) >= configTotal(%d) or hitsTotal(%d), stop!\r\n", writeSize, configTotalSize, hitsTotal)
 				return
 			}
 		}
 
 		// continue get scroll
-		scrollId := result.ScrollId
-		resp, err = getScroll(configScrollTime, scrollId)
+		scrollID := result.ScrollID
+		resp, err = getScroll(configScrollTime, scrollID)
 		if err != nil {
 			return
 		}
@@ -117,7 +123,14 @@ func main() {
 }
 
 /*
-curl '192.168.209.129:9200/logs/_search?pretty&scroll=1m' -H 'Content-Type: application/json' -d '{"size": 2}'
+curl '192.168.209.129:9200/logs/_search?pretty&scroll=1m' -H 'Content-Type: application/json' -d '
+{
+    "size": 2,
+    "query": {"bool": {"must": [
+        {"range": {"@timestamp": { "gte": "2017-12-25T01:00:00.000Z","lte": "2019-12-25T02:10:00.000Z"}}},
+        {"match": {"level": "WARN ERROR FATAL"}}
+    ]}}
+}'
 <- {
   "_scroll_id" : "DnF1......FvWV9n",
   "hits" : {
@@ -127,8 +140,38 @@ curl '192.168.209.129:9200/logs/_search?pretty&scroll=1m' -H 'Content-Type: appl
   }
 }
 */
-func createScroll(scrollTime, pageSize string) (resp *http.Response, err error) {
-	doc := fmt.Sprintf(`{"size":%s}`, pageSize)
+func createScroll(scrollTime, pageSize, startTime, endTime, level string) (resp *http.Response, err error) {
+	var sizeStr, levelStr, timeStr, doc string
+	sizeStr = fmt.Sprintf(`"size":%s`, pageSize)
+	if level != "" {
+		levelStr = fmt.Sprintf(`{"match": {"level": "%s"}}`, level)
+	}
+	if startTime != "" {
+		if endTime != "" {
+			timeStr = fmt.Sprintf(`{"range": {"@timestamp": { "gte": "%s","lte": "%s"}}}`, startTime, endTime)
+		} else {
+			timeStr = fmt.Sprintf(`{"range": {"@timestamp": { "gte": "%s"}}}`, startTime)
+		}
+	} else { // startTime == ""
+		if endTime != "" {
+			timeStr = fmt.Sprintf(`{"range": {"@timestamp": { "lte": "%s"}}}`, endTime)
+		}
+	}
+
+	if levelStr != "" {
+		if timeStr != "" {
+			doc = fmt.Sprintf(`{%s,"query": {"bool": {"must": [%s,%s]}}}`, sizeStr, timeStr, levelStr)
+		} else {
+			doc = fmt.Sprintf(`{%s,"query": {"bool": {"must": [%s]}}}`, sizeStr, levelStr)
+		}
+	} else { // levelStr ==""
+		if timeStr != "" {
+			doc = fmt.Sprintf(`{%s,"query": {"bool": {"must": [%s]}}}`, sizeStr, timeStr)
+		} else {
+			doc = fmt.Sprintf(`{%s}`, sizeStr)
+		}
+	}
+
 	client := http.Client{}
 	url := fmt.Sprintf("%s/logs/_search?scroll=%s", configSearchAddr, scrollTime)
 	request, _ := http.NewRequest("GET", url, strings.NewReader(doc))
@@ -146,9 +189,9 @@ func createScroll(scrollTime, pageSize string) (resp *http.Response, err error) 
 curl '192.168.209.129:9200/_search/scroll?pretty' -H 'Content-Type: application/json' -d '
 {"scroll":"1m","scroll_id": "DnF1......FvWV9n"}'
 */
-func getScroll(scrollTime, scrollId string) (resp *http.Response, err error) {
+func getScroll(scrollTime, scrollID string) (resp *http.Response, err error) {
 
-	doc := fmt.Sprintf(`{"scroll":"%s","scroll_id":"%s"}`, scrollTime, scrollId)
+	doc := fmt.Sprintf(`{"scroll":"%s","scroll_id":"%s"}`, scrollTime, scrollID)
 	client := http.Client{}
 	url := fmt.Sprintf("%s/_search/scroll", configSearchAddr)
 	request, _ := http.NewRequest("GET", url, strings.NewReader(doc))
@@ -169,15 +212,17 @@ config.json
         {"Key": "SearchAddr","Value":"http://192.168.209.129:9200"},
         {"Key": "TotalSize","Value": "10000"},
         {"Key": "PageSize","Value": "2"},
-        {"Key": "ScrollTime","Value": "1m"},
-        {"Key": "OutputFileName","Value":"logs-output.out"},
-        {"Key": "OutputDirectory","Value":""}
+				{"Key": "ScrollTime","Value": "1m"},
+        {"Key": "StartTime","Value": "2017-12-25 01:00:00.000 "},
+        {"Key": "EndTime","Value": "2022-12-25 01:00:00.000"},
+        {"Key": "Level","Value": "WARN ERROR FATAL"},
+        {"Key": "OutputFile","Value":"G:\Architecture\ES\Scroll\dump.log"}
     ]
 }
 */
 func getConfig() (err error) {
 	// init the config array
-	var configs Configuration
+	var configs configuration
 
 	jsonFile, err := os.Open("config.json")
 	if err != nil {
@@ -204,12 +249,26 @@ func getConfig() (err error) {
 		switch strings.ToLower(iter.Key) {
 		case "searchaddr":
 			configSearchAddr = iter.Value
-		case "outputfilename":
-			configOutputFileName = iter.Value
-		case "outputdirectory":
-			configOutputDirectory = iter.Value
+		case "outputfile":
+			configOutputFile = iter.Value
 		case "scrolltime":
 			configScrollTime = iter.Value
+		case "starttime":
+			configStartTime = iter.Value
+			t, e := time.Parse(timeFormatLocalLong, configStartTime)
+			if e != nil {
+				fmt.Println(e.Error())
+			}
+			configStartTime = t.Format(timeFormatAMZLong)
+		case "endtime":
+			configEndTime = iter.Value
+			t, e := time.Parse(timeFormatLocalLong, configEndTime)
+			if e != nil {
+				fmt.Println(e.Error())
+			}
+			configEndTime = t.Format(timeFormatAMZLong)
+		case "level":
+			configLevel = iter.Value
 		case "pagesize":
 			temp, convErr := strconv.Atoi(iter.Value)
 			if convErr != nil {

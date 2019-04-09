@@ -1,5 +1,0 @@
-2019-03-18 17:19:05.003 192.168.209.129 zfs DEBUG 200 OK
-2019-04-18 16:18:05.001 192.168.209.130 s3server ERROR 403 Client Access Licenses exceeded.
-2019-06-18 16:18:16.020 192.168.209.131 lakefs WARN 404 Not found
-2019-05-18 16:18:05.000 192.168.209.129 httpserver ERROR 403 Client Access Licenses exceeded.
-2019-05-19 18:18:05.100 192.168.209.128 httpserver INFO 301 permanent redirect

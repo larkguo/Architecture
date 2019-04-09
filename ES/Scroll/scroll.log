@@ -249,3 +249,91 @@ Thu Apr  4 09:15:40 CST 2019
 [root@localhost ~]# curl -XDELETE 192.168.209.129:9200/_search/scroll/_all
 {"succeeded":true,"num_freed":1}[root@localhost ~]# 
 [root@localhost ~]# 
+[root@localhost ~]# curl '192.168.209.129:9200/logs/_search?pretty&scroll=1m' -H 'Content-Type: application/json' -d '
+> {
+>     "size": 2,
+>     "query": {
+>         "bool": {
+>             "must": [
+>                 {"range": {"@timestamp": { "gte": "2017-12-25T01:00:00.000Z","lte": "2019-12-25T02:10:00.000Z"}}},
+>                 {"match": {"level": "WARN ERROR FATAL"}}
+>             ]
+>         }
+>     }
+> }'
+{
+  "_scroll_id" : "DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAABvFm10VnpKTG5IUVVLMDNaa1A3YW9ZX2cAAAAAAAAAcxZtdFZ6SkxuSFFVSzAzWmtQN2FvWV9nAAAAAAAAAHIWbXRWekpMbkhRVUswM1prUDdhb1lfZwAAAAAAAABxFm10VnpKTG5IUVVLMDNaa1A3YW9ZX2cAAAAAAAAAcBZtdFZ6SkxuSFFVSzAzWmtQN2FvWV9n",
+  "took" : 6,
+  "timed_out" : false,
+  "_shards" : {
+    "total" : 5,
+    "successful" : 5,
+    "skipped" : 0,
+    "failed" : 0
+  },
+  "hits" : {
+    "total" : 3,
+    "max_score" : 1.6931472,
+    "hits" : [
+      {
+        "_index" : "logs",
+        "_type" : "doc",
+        "_id" : "j6rKwWkB_hVnVxNZHTSQ",
+        "_score" : 1.6931472,
+        "_source" : {
+          "@timestamp" : "2019-05-18T08:18:05.000Z",
+          "host" : "192.168.209.129",
+          "module" : "httpserver",
+          "level" : "ERROR",
+          "message" : "403 Client Access Licenses exceeded."
+        }
+      },
+      {
+        "_index" : "logs",
+        "_type" : "doc",
+        "_id" : "karOwWkB_hVnVxNZuzR7",
+        "_score" : 1.287682,
+        "_source" : {
+          "@timestamp" : "2019-04-18T08:18:05.001Z",
+          "host" : "192.168.209.130",
+          "module" : "s3server",
+          "level" : "ERROR",
+          "message" : "403 Client Access Licenses exceeded."
+        }
+      }
+    ]
+  }
+}
+[root@localhost ~]# curl '192.168.209.129:9200/_search/scroll?pretty' -H 'Content-Type: application/json' -d '
+> {"scroll":"1m","scroll_id": "DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAABvFm10VnpKTG5IUVVLMDNaa1A3YW9ZX2cAAAAAAAAAcxZtdFZ6SkxuSFFVSzAzWmtQN2FvWV9nAAAAAAAAAHIWbXRWekpMbkhRVUswM1prUDdhb1lfZwAAAAAAAABxFm10VnpKTG5IUVVLMDNaa1A3YW9ZX2cAAAAAAAAAcBZtdFZ6SkxuSFFVSzAzWmtQN2FvWV9n"}'
+{
+  "_scroll_id" : "DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAABvFm10VnpKTG5IUVVLMDNaa1A3YW9ZX2cAAAAAAAAAcxZtdFZ6SkxuSFFVSzAzWmtQN2FvWV9nAAAAAAAAAHIWbXRWekpMbkhRVUswM1prUDdhb1lfZwAAAAAAAABxFm10VnpKTG5IUVVLMDNaa1A3YW9ZX2cAAAAAAAAAcBZtdFZ6SkxuSFFVSzAzWmtQN2FvWV9n",
+  "took" : 10,
+  "timed_out" : false,
+  "_shards" : {
+    "total" : 5,
+    "successful" : 5,
+    "skipped" : 0,
+    "failed" : 0
+  },
+  "hits" : {
+    "total" : 3,
+    "max_score" : 1.6931472,
+    "hits" : [
+      {
+        "_index" : "logs",
+        "_type" : "doc",
+        "_id" : "kqrOwWkB_hVnVxNZ0zSU",
+        "_score" : 1.287682,
+        "_source" : {
+          "@timestamp" : "2019-06-18T08:18:16.020Z",
+          "host" : "192.168.209.131",
+          "module" : "lakefs",
+          "level" : "WARN",
+          "message" : "404 Not found"
+        }
+      }
+    ]
+  }
+}
+[root@localhost ~]# 
