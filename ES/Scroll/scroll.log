@@ -14,7 +14,7 @@
 }},{"_index":"logs","_type":"doc","_id":"kqrOwWkB_hVnVxNZ0zSU","_score":1.0,"_source":{
     "@timestamp": "2019-06-18T08:18:16.020Z",
     "host": "192.168.209.131",
-    "module": "lakefs",
+    "module": "fs",
     "level": "WARN",
     "message": "404 Not found"
 }},{"_index":"logs","_type":"doc","_id":"j6rKwWkB_hVnVxNZHTSQ","_score":1.0,"_source":{
@@ -98,7 +98,7 @@
         "_source" : {
           "@timestamp" : "2019-06-18T08:18:16.020Z",
           "host" : "192.168.209.131",
-          "module" : "lakefs",
+          "module" : "fs",
           "level" : "WARN",
           "message" : "404 Not found"
         }
@@ -328,7 +328,7 @@ Thu Apr  4 09:15:40 CST 2019
         "_source" : {
           "@timestamp" : "2019-06-18T08:18:16.020Z",
           "host" : "192.168.209.131",
-          "module" : "lakefs",
+          "module" : "fs",
           "level" : "WARN",
           "message" : "404 Not found"
         }

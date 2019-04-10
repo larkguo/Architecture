@@ -24,7 +24,9 @@ var configOutputFile string
 
 const (
 	timeFormatAMZLong   = "2006-01-02T15:04:05.000Z" // Reply date format with nanosecond precision.
+	timeFormatAMZ       = "2006-01-02T15:04:05Z"     // Reply date format with nanosecond precision.
 	timeFormatLocalLong = "2006-01-02 15:04:05.000"  // Reply date format with nanosecond precision.
+	timeFormatLocal     = "2006-01-02 15:04:05"      // Reply date format with nanosecond precision.
 )
 
 type configuration struct {
@@ -172,6 +174,8 @@ func createScroll(scrollTime, pageSize, startTime, endTime, level string) (resp 
 		}
 	}
 
+	fmt.Println(doc)
+
 	client := http.Client{}
 	url := fmt.Sprintf("%s/logs/_search?scroll=%s", configSearchAddr, scrollTime)
 	request, _ := http.NewRequest("GET", url, strings.NewReader(doc))
@@ -245,39 +249,49 @@ func getConfig() (err error) {
 	// loop through the configuration and find the keys that we need to use and assign them to the global variables to be used
 	for i := 0; i < len(configs.Configs); i++ {
 		var iter = configs.Configs[i]
+		key := strings.TrimSpace(iter.Key)
+		value := strings.TrimSpace(iter.Value)
 
-		switch strings.ToLower(iter.Key) {
+		switch strings.ToLower(key) {
 		case "searchaddr":
-			configSearchAddr = iter.Value
+			configSearchAddr = value
 		case "outputfile":
-			configOutputFile = iter.Value
+			configOutputFile = value
 		case "scrolltime":
-			configScrollTime = iter.Value
+			configScrollTime = value
 		case "starttime":
-			configStartTime = iter.Value
-			t, e := time.Parse(timeFormatLocalLong, configStartTime)
+			configStartTime = value
+			t, e := time.Parse(timeFormatLocal, configStartTime)
 			if e != nil {
-				fmt.Println(e.Error())
+				t, e = time.Parse(timeFormatLocalLong, configStartTime)
+				if e == nil {
+					configStartTime = t.Format(timeFormatAMZLong)
+				}
+			} else {
+				configStartTime = t.Format(timeFormatAMZLong)
 			}
-			configStartTime = t.Format(timeFormatAMZLong)
 		case "endtime":
-			configEndTime = iter.Value
-			t, e := time.Parse(timeFormatLocalLong, configEndTime)
+			configEndTime = value
+			t, e := time.Parse(timeFormatLocal, configEndTime)
 			if e != nil {
-				fmt.Println(e.Error())
+				t, e = time.Parse(timeFormatLocalLong, configEndTime)
+				if e == nil {
+					configEndTime = t.Format(timeFormatAMZLong)
+				}
+			} else {
+				configEndTime = t.Format(timeFormatAMZLong)
 			}
-			configEndTime = t.Format(timeFormatAMZLong)
 		case "level":
-			configLevel = iter.Value
+			configLevel = value
 		case "pagesize":
-			temp, convErr := strconv.Atoi(iter.Value)
+			temp, convErr := strconv.Atoi(value)
 			if convErr != nil {
 				fmt.Println("PageSize invalid, expected an integer, actual value: " + iter.Value)
 			} else {
 				configPageSize = temp
 			}
 		case "totalsize":
-			temp, convErr := strconv.Atoi(iter.Value)
+			temp, convErr := strconv.Atoi(value)
 			if convErr != nil {
 				fmt.Println("TotalSize invalid, expected an integer, actual value: " + iter.Value)
 			} else {
