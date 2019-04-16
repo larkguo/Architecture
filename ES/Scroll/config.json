@@ -29,6 +29,10 @@
             "Value": "WARN ERROR FATAL"
         },
         {
+            "Key": "Host",
+            "Value": ""
+        },
+        {
             "Key":"OutputFile",
             "Value":"dump.log"
         }

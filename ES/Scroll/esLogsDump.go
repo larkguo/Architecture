@@ -19,14 +19,15 @@ var configTotalSize int
 var configStartTime string
 var configEndTime string
 var configLevel string
+var configHost string
 var configScrollTime string
 var configOutputFile string
 
 const (
 	timeFormatAMZLong   = "2006-01-02T15:04:05.000Z" // Reply date format with nanosecond precision.
-	timeFormatAMZ       = "2006-01-02T15:04:05Z"     // Reply date format with nanosecond precision.
-	timeFormatLocalLong = "2006-01-02 15:04:05.000"  // Reply date format with nanosecond precision.
-	timeFormatLocal     = "2006-01-02 15:04:05"      // Reply date format with nanosecond precision.
+	timeFormatAMZ       = "2006-01-02T15:04:05Z"
+	timeFormatLocalLong = "2006-01-02 15:04:05.000"
+	timeFormatLocal     = "2006-01-02 15:04:05"
 )
 
 type configuration struct {
@@ -77,7 +78,7 @@ func main() {
 	defer f.Close()
 
 	// create scroll
-	resp, err := createScroll(configScrollTime, strconv.Itoa(configPageSize), configStartTime, configEndTime, configLevel)
+	resp, err := createScroll(configScrollTime, strconv.Itoa(configPageSize), configStartTime, configEndTime, configLevel, configHost)
 	if err != nil {
 		return
 	}
@@ -130,7 +131,8 @@ curl '192.168.209.129:9200/logs/_search?pretty&scroll=1m' -H 'Content-Type: appl
     "size": 2,
     "query": {"bool": {"must": [
         {"range": {"@timestamp": { "gte": "2017-12-25T01:00:00.000Z","lte": "2019-12-25T02:10:00.000Z"}}},
-        {"match": {"level": "WARN ERROR FATAL"}}
+        {"match": {"level": "WARN ERROR FATAL"}},
+        {"match": {"host": "localhost 127.0.0.1"}}
     ]}}
 }'
 <- {
@@ -142,12 +144,21 @@ curl '192.168.209.129:9200/logs/_search?pretty&scroll=1m' -H 'Content-Type: appl
   }
 }
 */
-func createScroll(scrollTime, pageSize, startTime, endTime, level string) (resp *http.Response, err error) {
-	var sizeStr, levelStr, timeStr, doc string
+func createScroll(scrollTime, pageSize, startTime, endTime, level, host string) (resp *http.Response, err error) {
+	var sizeStr, timeStr, matchStr, doc string
 	sizeStr = fmt.Sprintf(`"size":%s`, pageSize)
 	if level != "" {
-		levelStr = fmt.Sprintf(`{"match": {"level": "%s"}}`, level)
+		if host != "" {
+			matchStr = fmt.Sprintf(`{"match": {"level": "%s"}},{"match": {"host": "%s"}}`, level, host)
+		} else {
+			matchStr = fmt.Sprintf(`{"match": {"level": "%s"}}`, level)
+		}
+	} else {
+		if host != "" {
+			matchStr = fmt.Sprintf(`{"match": {"host": "%s"}}`, host)
+		}
 	}
+
 	if startTime != "" {
 		if endTime != "" {
 			timeStr = fmt.Sprintf(`{"range": {"@timestamp": { "gte": "%s","lte": "%s"}}}`, startTime, endTime)
@@ -160,13 +171,13 @@ func createScroll(scrollTime, pageSize, startTime, endTime, level string) (resp 
 		}
 	}
 
-	if levelStr != "" {
+	if matchStr != "" {
 		if timeStr != "" {
-			doc = fmt.Sprintf(`{%s,"query": {"bool": {"must": [%s,%s]}}}`, sizeStr, timeStr, levelStr)
+			doc = fmt.Sprintf(`{%s,"query": {"bool": {"must": [%s,%s]}}}`, sizeStr, timeStr, matchStr)
 		} else {
-			doc = fmt.Sprintf(`{%s,"query": {"bool": {"must": [%s]}}}`, sizeStr, levelStr)
+			doc = fmt.Sprintf(`{%s,"query": {"bool": {"must": [%s]}}}`, sizeStr, matchStr)
 		}
-	} else { // levelStr ==""
+	} else { // matchStr ==""
 		if timeStr != "" {
 			doc = fmt.Sprintf(`{%s,"query": {"bool": {"must": [%s]}}}`, sizeStr, timeStr)
 		} else {
@@ -219,7 +230,8 @@ config.json
 				{"Key": "ScrollTime","Value": "1m"},
         {"Key": "StartTime","Value": "2017-12-25 01:00:00.000 "},
         {"Key": "EndTime","Value": "2022-12-25 01:00:00.000"},
-        {"Key": "Level","Value": "WARN ERROR FATAL"},
+				{"Key": "Level","Value": "WARN ERROR FATAL"},
+				{"Key": "Host","Value": ""},
         {"Key": "OutputFile","Value":"G:\Architecture\ES\Scroll\dump.log"}
     ]
 }
@@ -283,6 +295,8 @@ func getConfig() (err error) {
 			}
 		case "level":
 			configLevel = value
+		case "host":
+			configHost = value
 		case "pagesize":
 			temp, convErr := strconv.Atoi(value)
 			if convErr != nil {
