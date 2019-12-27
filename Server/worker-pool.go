@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"runtime"
-	"sync"
 )
 
 //===================================pool===================================
@@ -77,7 +75,7 @@ func newDispatcher(workerPool chan *worker, jobQueue chan Job) *dispatcher {
 		stop:       make(chan struct{}),
 	}
 	for i := 1; i <= cap(d.workerPool); i++ { //启动多个worker协程，填满workerPool
-		worker := newWorker(d.workerPool,id)
+		worker := newWorker(d.workerPool,i)
 		worker.start()
 	}
 	go d.dispatch() //开启调度协程
