@@ -9,9 +9,7 @@ import (
 )
 
 //===================================pool===================================
-/* 
-from https://github.com/ivpusic/grpool
-*/
+//refer https://github.com/ivpusic/grpool
 
 // Represents user request, function which should be executed in some worker.
 type Job func() //callback()
