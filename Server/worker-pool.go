@@ -32,9 +32,9 @@ func (w *worker) start() {
 
 			select {
 			case job = <-w.jobChannel:
-				job() // callback, 可以block执行
-			case <-w.stop:
-				w.stop <- struct{}{}
+				job() // callback回调, 可以block阻塞执行
+			case <-w.stop: // 收到退出通知
+				w.stop <- struct{}{} // 反馈给dispatcher:完成退出
 				return
 			}
 		}
@@ -70,11 +70,11 @@ func (d *dispatcher) dispatch() {
 				worker := <-d.workerPool
 
 				fmt.Println("worker stop,", cap(d.workerPool))
-				worker.stop <- struct{}{}
-				<-worker.stop
+				worker.stop <- struct{}{} // 通知worker退出
+				<-worker.stop // 等待worker退出完成的反馈
 			}
 
-			d.stop <- struct{}{}
+			d.stop <- struct{}{} // 反馈:完成退出
 			return
 		}
 	}
@@ -100,7 +100,6 @@ func newDispatcher(workerPool chan *worker, jobQueue chan Job) *dispatcher {
 type Pool struct {
 	JobQueue   chan Job
 	dispatcher *dispatcher
-	wg         sync.WaitGroup
 }
 
 // Will make pool of gorouting workers.
@@ -120,29 +119,10 @@ func NewPool(numWorkers int, jobQueueLen int) *Pool {
 	return pool
 }
 
-// In case you are using WaitAll fn, you should call this method
-// every time your job is done.
-//
-// If you are not using WaitAll then we assume you have your own way of synchronizing.
-func (p *Pool) JobDone() {
-	p.wg.Done()
-}
-
-// How many jobs we should wait when calling WaitAll.
-// It is using WaitGroup Add/Done/Wait
-func (p *Pool) WaitCount(count int) {
-	p.wg.Add(count)
-}
-
-// Will wait for all jobs to finish.
-func (p *Pool) WaitAll() {
-	p.wg.Wait()
-}
-
 // Will release resources used by pool
 func (p *Pool) Release() {
-	p.dispatcher.stop <- struct{}{}
-	<-p.dispatcher.stop
+	p.dispatcher.stop <- struct{}{} // 通知dispatcher退出
+	<-p.dispatcher.stop // 等待dispatcher退出完成的反馈
 }
 
 //===================================test===================================
