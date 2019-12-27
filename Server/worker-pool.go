@@ -20,7 +20,6 @@ type worker struct {
 	jobChannel chan Job
 	stop       chan struct{}
 }
-
 func (w *worker) start() {
 	go func() {
 		var job Job
@@ -36,7 +35,6 @@ func (w *worker) start() {
 		}
 	}()
 }
-
 func newWorker(pool chan *worker) *worker {
 	return &worker{
 		workerPool: pool,
@@ -51,7 +49,6 @@ type dispatcher struct {
 	jobQueue   chan Job
 	stop       chan struct{}
 }
-
 func (d *dispatcher) dispatch() {
 	for {
 		select {
@@ -70,20 +67,16 @@ func (d *dispatcher) dispatch() {
 		}
 	}
 }
-
 func newDispatcher(workerPool chan *worker, jobQueue chan Job) *dispatcher {
 	d := &dispatcher{
 		workerPool: workerPool,
 		jobQueue:   jobQueue,
 		stop:       make(chan struct{}),
 	}
-
-	//启动多个worker协程，填满workerPool
-	for i := 0; i < cap(d.workerPool); i++ {
+	for i := 0; i < cap(d.workerPool); i++ { //启动多个worker协程，填满workerPool
 		worker := newWorker(d.workerPool)
 		worker.start()
 	}
-
 	go d.dispatch() //开启调度协程
 	return d
 }
@@ -125,12 +118,6 @@ const (
 	CONN_PORT = "9999"
 	CONN_TYPE = "tcp"
 )
-
-func init() {
-	numCPUs := runtime.NumCPU()
-	runtime.GOMAXPROCS(numCPUs)
-	println("using MAXPROC", numCPUs)
-}
 
 // Handles incoming requests.
 func handleRequest(conn net.Conn) {
