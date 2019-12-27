@@ -9,7 +9,7 @@ import (
 )
 
 //===================================pool===================================
-//refer https://github.com/ivpusic/grpool
+// refer https://github.com/ivpusic/grpool
 
 // Represents user request, function which should be executed in some worker.
 type Job func() //callback()
@@ -55,7 +55,7 @@ type dispatcher struct {
 func (d *dispatcher) dispatch() {
 	for {
 		select {
-		case job := <-d.jobQueue: //来活了:从workerPool取出空闲worker协程，把任务分给该worker
+		case job := <-d.jobQueue: //来活了: 从workerPool取出空闲worker协程，把任务分给该worker
 			worker := <-d.workerPool
 			worker.jobChannel <- job
 		case <-d.stop: // 收到退出通知
@@ -65,7 +65,6 @@ func (d *dispatcher) dispatch() {
 				worker.stop <- struct{}{} // 通知worker退出
 				<-worker.stop // 等待worker退出完成的反馈
 			}
-
 			d.stop <- struct{}{} // 反馈:完成退出
 			return
 		}
@@ -102,12 +101,10 @@ type Pool struct {
 func NewPool(numWorkers int, jobQueueLen int) *Pool {
 	jobQueue := make(chan Job, jobQueueLen)
 	workerPool := make(chan *worker, numWorkers)
-
 	pool := &Pool{
 		JobQueue:   jobQueue,
 		dispatcher: newDispatcher(workerPool, jobQueue),
 	}
-
 	return pool
 }
 
@@ -165,9 +162,7 @@ func main() {
 			os.Exit(1)
 		} else {
 			fmt.Println("<< ", conn.RemoteAddr())
-
-			// 每个client启动一个协程，各自处理，互相没有交互
-			pool.JobQueue <- func() {
+			pool.JobQueue <- func() { // 每个client启动一个协程，各自处理，互相没有交互
 				handleRequest(conn) // job回调,可以是任意形式
 			}
 		}
