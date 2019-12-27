@@ -25,9 +25,7 @@ func (w *worker) start() {
 	go func() {
 		var job Job
 		for {
-			// worker创建或job()回调执行完后添加到空闲队列workerPool里
-			w.workerPool <- w
-
+			w.workerPool <- w // worker创建或job()回调执行完后添加到空闲队列workerPool里
 			select {
 			case job = <-w.jobChannel:
 				job() // callback回调, 可以block阻塞执行
@@ -57,16 +55,12 @@ type dispatcher struct {
 func (d *dispatcher) dispatch() {
 	for {
 		select {
-		case job := <-d.jobQueue:
-
-			//从workerPool取出空闲worker协程，把任务分给该worker
+		case job := <-d.jobQueue: //来活了:从workerPool取出空闲worker协程，把任务分给该worker
 			worker := <-d.workerPool
 			worker.jobChannel <- job
-
-		case <-d.stop:
+		case <-d.stop: // 收到退出通知
 			for i := 0; i < cap(d.workerPool); i++ {
 				worker := <-d.workerPool
-
 				fmt.Println("worker stop,", cap(d.workerPool))
 				worker.stop <- struct{}{} // 通知worker退出
 				<-worker.stop // 等待worker退出完成的反馈
@@ -91,7 +85,7 @@ func newDispatcher(workerPool chan *worker, jobQueue chan Job) *dispatcher {
 		worker.start()
 	}
 
-	go d.dispatch()
+	go d.dispatch() //开启调度协程
 	return d
 }
 
@@ -125,7 +119,6 @@ func (p *Pool) Release() {
 
 //===================================test===================================
 var (
-	maxJobs     int = 8
 	numWorkers  int = 10
 	jobQueueLen int = 5
 )
@@ -144,39 +137,29 @@ func init() {
 
 // Handles incoming requests.
 func handleRequest(conn net.Conn) {
-
-	// Make a buffer to hold incoming data.
 	buf := make([]byte, 1024)
-	// Read the incoming connection into the buffer.
 	reqLen, err := conn.Read(buf)
 	if err != nil {
 		fmt.Println("Error reading:", err.Error())
 	}
-	// Send a response back to person contacting us.
 	conn.Write(buf[:reqLen])
-
-	// Close the connection when you're done with it.
 	conn.Close()
 }
 
 func main() {
-	// number of workers, and size of job queue
-	pool := NewPool(numWorkers, jobQueueLen)
+	pool := NewPool(numWorkers, jobQueueLen) // number of workers, and size of job queue
 	defer pool.Release()
 
-	// Listen for incoming connections.
 	l, err := net.Listen(CONN_TYPE, CONN_HOST+":"+CONN_PORT)
 	if err != nil {
 		fmt.Println("Error listening:", err.Error())
 		os.Exit(1)
 	}
-	// Close the listener when the application closes.
 	defer l.Close()
 
 	fmt.Println("Listening on " + CONN_HOST + ":" + CONN_PORT)
 	for {
-		// Listen for an incoming connection.
-		conn, err := l.Accept()
+		conn, err := l.Accept() // Listen for an incoming connection.
 		if err != nil {
 			fmt.Println("Error accepting: ", err.Error())
 			os.Exit(1)
@@ -185,8 +168,7 @@ func main() {
 
 			// 每个client启动一个协程，各自处理，互相没有交互
 			pool.JobQueue <- func() {
-
-				handleRequest(conn) // job回调
+				handleRequest(conn) // job回调,可以是任意形式
 			}
 		}
 	}
