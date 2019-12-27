@@ -16,6 +16,7 @@ type Job func() //callback()
 
 // Gorouting instance which can accept client jobs
 type worker struct {
+	id 	int
 	workerPool chan *worker
 	jobChannel chan Job
 	stop       chan struct{}
@@ -27,6 +28,7 @@ func (w *worker) start() {
 			w.workerPool <- w // worker创建或job()回调执行完后添加到空闲队列workerPool里
 			select {
 			case job = <-w.jobChannel:
+				fmt.Println("worker:",w.id)
 				job() // callback回调, 可以block阻塞执行
 			case <-w.stop: // 收到退出通知
 				w.stop <- struct{}{} // 反馈给dispatcher:完成退出
@@ -35,8 +37,9 @@ func (w *worker) start() {
 		}
 	}()
 }
-func newWorker(pool chan *worker) *worker {
+func newWorker(pool chan *worker,workerId int) *worker {
 	return &worker{
+		id:workerId,
 		workerPool: pool,
 		jobChannel: make(chan Job),
 		stop:       make(chan struct{}),
@@ -73,8 +76,8 @@ func newDispatcher(workerPool chan *worker, jobQueue chan Job) *dispatcher {
 		jobQueue:   jobQueue,
 		stop:       make(chan struct{}),
 	}
-	for i := 0; i < cap(d.workerPool); i++ { //启动多个worker协程，填满workerPool
-		worker := newWorker(d.workerPool)
+	for i := 1; i <= cap(d.workerPool); i++ { //启动多个worker协程，填满workerPool
+		worker := newWorker(d.workerPool,id)
 		worker.start()
 	}
 	go d.dispatch() //开启调度协程
@@ -109,8 +112,8 @@ func (p *Pool) Release() {
 
 //===================================test===================================
 var (
-	numWorkers  int = 10
-	jobQueueLen int = 5
+	numWorkers  int = 2
+	jobQueueLen int = 1
 )
 
 const (
